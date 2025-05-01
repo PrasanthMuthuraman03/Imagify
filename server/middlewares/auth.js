@@ -7,7 +7,7 @@ const userAuth = async (req, res, next) => {
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return res.status(401).json({ success: false, message: "Not Authorized. Login Again" });
         }
-
+// its rendering//
         const token = authHeader.split(" ")[1];
         console.log("🔐 Token Received:", token);
 
