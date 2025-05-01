@@ -9,18 +9,19 @@ const userAuth = async (req, res, next) => {
         }
 
         const token = authHeader.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("🔐 Token Received:", token);
 
-        if (!decoded.id) {
-            return res.status(401).json({ success: false, message: "Invalid token. Login Again" });
-        }
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ success: false, message: "Token verification failed" });
+            }
 
-        req.user = { id: decoded.id }; 
-        console.log("✅ User Authenticated:", req.user); // Debugging
-
-        next();
+            req.user = { id: decoded.id }; // Attach decoded user info to request
+            console.log("✅ User Authenticated:", req.user);
+            next();
+        });
     } catch (error) {
-        console.error("❌ Token verification failed:", error.message);
+        console.error("❌ Error verifying token:", error.message);
         return res.status(401).json({ success: false, message: "Token verification failed" });
     }
 };

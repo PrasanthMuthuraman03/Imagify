@@ -8,10 +8,9 @@ export const AppContext = createContext();
 const AppContextProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [showLogin, setShowLogin] = useState(false);
-    const [token, setToken] = useState(localStorage.getItem("token"));
+    const [token, setToken] = useState(localStorage.getItem("token") || "");
     const [credit, setCredit] = useState(false);
 
-    // Ensure backend URL is set properly
     const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
     const navigate = useNavigate();
 
@@ -23,15 +22,15 @@ const AppContextProvider = ({ children }) => {
                 toast.error("User not authenticated.");
                 return;
             }
-    
+
             console.log("Fetching credits with token:", token);
-    
+
             const { data } = await axios.get(`${backendUrl}/api/user/credits`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-    
+
             console.log("API Response:", data);
-    
+
             if (data.success && data.user) {
                 setUser(data.user);
                 setCredit(data.credits);
@@ -40,13 +39,13 @@ const AppContextProvider = ({ children }) => {
                 toast.error(data.message || "Failed to load credits.");
             }
         } catch (error) {
-            console.error("Error loading credits:", error.response?.data || error.message);
-            toast.error("Something went wrong. Please try again.");
+            const errMsg = error.response?.data?.message || "Something went wrong.";
+            console.error("Error loading credits:", errMsg);
+            toast.error(errMsg);
         }
     };
-    
 
-    // 🔹 Generate Image Function (Fixed)
+    // 🔹 Generate Image Function
     const generateImage = async (prompt) => {
         try {
             if (!token) {
@@ -60,12 +59,12 @@ const AppContextProvider = ({ children }) => {
             }
 
             const { data } = await axios.post(
-                `${backendUrl}/api/image/generate-image`,  // ✅ Fixed URL formatting
-                { prompt, userId: user._id },  // ✅ Added userId
+                `${backendUrl}/api/image/generate-image`,
+                { prompt, userId: user._id },
                 {
-                    headers: { 
-                        Authorization: `Bearer ${token}`,  // ✅ Fixed string formatting
-                        "Content-Type": "application/json",  // ✅ Added Content-Type
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
                     },
                 }
             );
@@ -74,13 +73,14 @@ const AppContextProvider = ({ children }) => {
                 loadCreditData();
                 return data.resultImage;
             } else {
-                toast.error(data.message);
+                toast.error(data.message || "Image generation failed.");
                 loadCreditData();
                 if (data.creditBalance === 0) navigate("/buy");
             }
         } catch (error) {
-            console.error("Error generating image:", error.response?.data || error.message);
-            toast.error("Something went wrong while generating the image.");
+            const errMsg = error.response?.data?.message || "Something went wrong while generating the image.";
+            console.error("Error generating image:", errMsg);
+            toast.error(errMsg);
         }
     };
 
@@ -89,32 +89,41 @@ const AppContextProvider = ({ children }) => {
         localStorage.removeItem("token");
         setToken("");
         setUser(null);
+        toast.info("Logged out successfully.");
     };
 
-    // 🔹 Run on first load
+    // 🔹 Load token and credit on initial mount
     useEffect(() => {
-        console.log("Token from localStorage:", localStorage.getItem("token"));
-        console.log("Current Token State:", token);
-        console.log("Current User State:", user);
-        if (token) loadCreditData();
+        const localToken = localStorage.getItem("token");
+        if (localToken && !token) {
+            setToken(localToken); // triggers the useEffect below
+        }
+    }, []);
+
+    // 🔹 Load credit when token changes
+    useEffect(() => {
+        if (token) {
+            loadCreditData();
+        }
     }, [token]);
-    
 
     return (
-        <AppContext.Provider value={{
-            user,
-            setUser,
-            showLogin,
-            setShowLogin,
-            backendUrl,
-            token,
-            setToken,
-            credit,
-            setCredit,
-            loadCreditData,
-            logout,
-            generateImage
-        }}>
+        <AppContext.Provider
+            value={{
+                user,
+                setUser,
+                showLogin,
+                setShowLogin,
+                backendUrl,
+                token,
+                setToken,
+                credit,
+                setCredit,
+                loadCreditData,
+                logout,
+                generateImage,
+            }}
+        >
             {children}
         </AppContext.Provider>
     );

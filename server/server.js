@@ -1,19 +1,31 @@
-import express from 'express'
-import cors from 'cors'
-import 'dotenv/config'
-import connectDB from './config/mongodb.js'
-import userRouter from './routes/userRoutes.js'
-import imageRouter from './routes/imageRoutes.js'
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import connectDB from './config/mongodb.js';
+import userRouter from './routes/userRoutes.js';
+import imageRouter from './routes/imageRoutes.js';
 
+// Load .env variables
+dotenv.config();
 
-const PORT= process.env.PORT || 4000
-const app = express()
+const PORT = process.env.PORT || 4000;
+const app = express();
 
-app.use(express.json())
-app.use(cors())
-await connectDB()
-app.use('/api/user',userRouter)
-app.use('/api/image',imageRouter)
-app.get('/',(req,res)=>res.send("API Working "))
+// Middlewares
+app.use(cors());
+app.use(express.json());
 
-app.listen(PORT,()=>console.log('server running on port'+" "+ PORT))
+// Connect to DB
+connectDB();
+
+// API Routes
+app.use('/api/user', userRouter);
+app.use('/api/image', imageRouter);
+
+// Default Route
+app.get('/', (req, res) => res.send("✅ API Working"));
+
+// Start Server
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});

@@ -1,5 +1,5 @@
 import userModel from "../models/userModels.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import razorpay from "razorpay";
 import transactionModel from "../models/transactionModel.js";
@@ -70,7 +70,7 @@ const userCredits = async (req, res) => {
         console.log(error);
         res.status(500).json({ success: false, message: error.message });
     }
-};
+}; 
 
 
 const razorpayInstance = new razorpay({
